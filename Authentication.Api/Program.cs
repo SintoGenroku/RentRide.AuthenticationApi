@@ -1,3 +1,11 @@
+using Authentication.Api.Configurations;
+using Authentication.Api.Extensions;
+using Authentication.Common;
+using Authentication.Data;
+using Authentication.Data.Abstracts;
+using Authentication.Data.Stores;
+using Authentication.Services;
+using Authentication.Services.Abstracts;
 using IdentityServer4.AccessTokenValidation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -33,7 +41,41 @@ services.AddSwaggerGen(options =>
     options.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
 });
 
+services.AddDbContext<AuthenticationDbContext>(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
+
+services.AddScoped<IAuthenticationUnitOfWork, AuthenticationUnitOfWork>();
+services.AddScoped<IAuthenticationService, AuthenticationService>();
+services.AddScoped<IUserService, UserService>();
+
+
 services.AddAutoMapper(configuration => { configuration.AddMaps(typeof(Program).Assembly); });
+
+services.AddIdentityCore<User>(options =>
+    {
+        options.Password.RequireDigit = true;
+        options.Password.RequiredLength = 6;
+        options.Password.RequireLowercase = true;
+        options.Password.RequireUppercase = true;
+        options.Password.RequireNonAlphanumeric = false;
+    })
+    .AddPasswordValidator<PasswordValidator<User>>()
+    .AddSignInManager()
+    .AddUserStore<UserStore>()
+    .AddRoles<Role>()
+    .AddRoleStore<RoleStore>()
+    .AddRoleManager<RoleManager<Role>>()
+    .AddUserManager<UserManager<User>>();
+
+    services.AddIdentityServer()
+    .AddInMemoryApiResources(Configuration.ApiResources)
+    .AddInMemoryIdentityResources(Configuration.IdentityResources)
+    .AddInMemoryApiScopes(Configuration.ApiScopes)
+    .AddInMemoryClients(Configuration.Clients)
+    .AddDeveloperSigningCredential()
+    .AddAspNetIdentity<User>();
 
 builder.Services.AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
     .AddIdentityServerAuthentication(options =>
@@ -43,6 +85,10 @@ builder.Services.AddAuthentication(IdentityServerAuthenticationDefaults.Authenti
 
 
 var app = builder.Build();
+
+app.UseCustomExceptionHandler();
+await app.Services.CreateDatabaseIfNotExists();
+
 
 if (app.Environment.IsDevelopment())
 {

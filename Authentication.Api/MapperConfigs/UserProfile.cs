@@ -11,7 +11,6 @@ public class UserProfile : Profile
     {
         CreateMap<UserRegistrationRequestModel, User>()
             .ForMember(request => request.Username, o => o.MapFrom(user => user.Login));
-        CreateMap<UserLoginRequestModel, User>();
         CreateMap<UserEditRequestModel, User>();
         CreateMap<User, UserResponseModel>();
     }

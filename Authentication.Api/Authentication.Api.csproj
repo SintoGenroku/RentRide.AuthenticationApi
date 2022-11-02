@@ -41,4 +41,8 @@
       <ProjectReference Include="..\Authentication.Services\Authentication.Services.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Validators" />
+    </ItemGroup>
+
 </Project>

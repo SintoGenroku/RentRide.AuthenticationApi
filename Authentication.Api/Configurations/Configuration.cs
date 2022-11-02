@@ -21,15 +21,27 @@ public class Configuration
     public static IEnumerable<IdentityResource> IdentityResources =>
         new List<IdentityResource>
         {
-            new IdentityResources.OpenId(),
-            new IdentityResources.Profile(),
-            new IdentityResources.Email(),
-            new IdentityResources.Phone(),
+            new IdentityResources.OpenId(), 
+            new(
+                name: "user-profile",
+                userClaims: new[] { "name", "role","email" },
+                displayName: "Your profile data")
         };
-
-    public static IEnumerable<ApiResource> ApiResources =>
+            
+        public static IEnumerable<ApiResource> ApiResources =>
         new List<ApiResource>()
         {
+            new("Client")
+            {
+                ApiSecrets =
+                {
+                    new Secret("client-secret".Sha256())
+                },
+                Scopes =
+                {
+                    "UserInfoScope"
+                } 
+            },
             new("Rent.Api")
             {
                 ApiSecrets =
@@ -89,6 +101,18 @@ public class Configuration
                     "UserInfoScope",
                     "ApiScope"
                 } 
+            },
+            new("Users.Api")
+            {
+                ApiSecrets =
+                {
+                    new Secret("users-secret".Sha256())
+                },
+                Scopes =
+                {
+                    "UserInfoScope",
+                    "ApiScope"
+                } 
             }
         };
     
@@ -105,10 +129,8 @@ public class Configuration
             },
             AllowedScopes =
             {
-                IdentityServerConstants.StandardScopes.OpenId, 
-                IdentityServerConstants.StandardScopes.Phone,
-                IdentityServerConstants.StandardScopes.Email,
-                "UserInfoScope"
+                IdentityServerConstants.StandardScopes.OpenId,
+                "UserInfoScope", "user-profile", "Client" 
 
             },
             AllowOfflineAccess    = true

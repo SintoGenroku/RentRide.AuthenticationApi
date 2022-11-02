@@ -1,5 +1,7 @@
 using Authentication.Api.Configurations;
+using Authentication.Api.Consumers;
 using Authentication.Api.Extensions;
+using Authentication.Api.Validators;
 using Authentication.Common;
 using Authentication.Data;
 using Authentication.Data.Abstracts;
@@ -7,9 +9,14 @@ using Authentication.Data.Stores;
 using Authentication.Services;
 using Authentication.Services.Abstracts;
 using IdentityServer4.AccessTokenValidation;
+using MassTransit;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using RentRide.AuthenticationApi.Models;
+using Serilog;
+using Serilog.Events;
+using Serilog.Sinks.Logz.Io;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,12 +60,26 @@ services.AddScoped<IUserService, UserService>();
 
 services.AddAutoMapper(configuration => { configuration.AddMaps(typeof(Program).Assembly); });
 
+services.AddMassTransit(c =>
+{
+    c.AddConsumer<UserConsumer>();
+    
+    c.UsingRabbitMq((context, config) =>
+    {
+        config.ReceiveEndpoint("auth-queue", e =>
+        {
+            e.Bind<UserCreated>();
+            e.ConfigureConsumer<UserConsumer>(context);
+        });
+    });
+});
+
 services.AddIdentityCore<User>(options =>
     {
         options.Password.RequireDigit = true;
         options.Password.RequiredLength = 6;
-        options.Password.RequireLowercase = true;
-        options.Password.RequireUppercase = true;
+        options.Password.RequireLowercase = false;
+        options.Password.RequireUppercase = false;
         options.Password.RequireNonAlphanumeric = false;
     })
     .AddPasswordValidator<PasswordValidator<User>>()
@@ -69,20 +90,37 @@ services.AddIdentityCore<User>(options =>
     .AddRoleManager<RoleManager<Role>>()
     .AddUserManager<UserManager<User>>();
 
-    services.AddIdentityServer()
+services.AddIdentityServer()
     .AddInMemoryApiResources(Configuration.ApiResources)
     .AddInMemoryIdentityResources(Configuration.IdentityResources)
     .AddInMemoryApiScopes(Configuration.ApiScopes)
     .AddInMemoryClients(Configuration.Clients)
     .AddDeveloperSigningCredential()
-    .AddAspNetIdentity<User>();
+    .AddAspNetIdentity<User>()
+    .AddResourceOwnerValidator<CustomResourceOwnerPasswordValidator>();
 
-builder.Services.AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
+services.AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
     .AddIdentityServerAuthentication(options =>
     {
-        options.Authority = "https://authentication-api";
+        options.Authority = "http://localhost:5035";
+        options.RequireHttpsMetadata = false;
+        options.ApiName = "Client";
+        options.ApiSecret = "client-secret";
     });
 
+var logger = new LoggerConfiguration()
+    .WriteTo.LogzIoDurableHttp(
+        "https://listener.logz.io:8071/?type=<string>&token=NLKhSzkrJgYczQDwPtnEFSOrpfFVKRRn",
+        logzioTextFormatterOptions: new LogzioTextFormatterOptions
+        {
+            BoostProperties = true,
+            LowercaseLevel = true,
+            IncludeMessageTemplate = true,
+            FieldNaming = LogzIoTextFormatterFieldNaming.CamelCase,
+            EventSizeLimitBytes = 261120,
+        })
+    .MinimumLevel.Verbose()
+    .CreateLogger();
 
 var app = builder.Build();
 
@@ -101,6 +139,7 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseAuthorization();
+app.UseAuthentication();
 
 app.UseCors(options => options
     .AllowAnyOrigin()

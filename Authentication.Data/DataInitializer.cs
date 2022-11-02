@@ -19,18 +19,14 @@ public class DataInitializer
                     Password = "1mBoss",
                     RoleNames = new[] {RoleNames.Admin},
                     Username = "Admin",
-                    Fullname = "Admin Smith",
-                    PhoneNumber = "+375291235467",
-                    MailAddress = "boss.adam@gmail.com"
+                    IsActive = true,
                 },
                 new InitUser()
                 {
                     Password = "zxc1V1",
                     RoleNames = new[] {RoleNames.Client},
                     Username = "User",
-                    Fullname = "Sam Rogers",
-                    PhoneNumber = "+375257654321",
-                    MailAddress = "sam.rog@gmail.com"
+                    IsActive = true,    
                 }
             };
 
@@ -48,12 +44,10 @@ public class DataInitializer
                 {
                     var newUser = new User()
                     {
-                        Fullname = user.Fullname,
                         Username = user.Username,
                         Roles = new List<Role>(),
-                        CreatedAt = DateTime.UtcNow,
-                        PhoneNumber = user.PhoneNumber,
-                        MailAddress = user.MailAddress
+                        IsActive = user.IsActive,
+
                     };
                     await userManager.CreateAsync(newUser, user.Password);
 
@@ -100,14 +94,10 @@ public class DataInitializer
         {
             public string Username { get; set; }
     
-            public string Fullname { get; set; }
-            
             public string Password { get; init; }
 
             public string[] RoleNames { get; init; }
-    
-            public string PhoneNumber { get; set; }
-    
-            public string MailAddress { get; set; }
+
+            public bool IsActive { get; set; }
         }
 }

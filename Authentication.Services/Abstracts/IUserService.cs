@@ -14,4 +14,6 @@ public interface IUserService
     Task UpdateAsync(User user);
 
     Task<User> GetByNameAsync(string username);
+
+    Task UpdateUserActivityAsync(User user);
 }

@@ -21,11 +21,8 @@ public class AuthenticationDbContext : DbContext
             user.HasMany(u => u.Roles)
                 .WithMany(r => r.Users);
 
-            user.Property(u => u.Fullname).IsRequired();
             user.Property(u => u.Username).IsRequired();
             user.Property(u => u.PasswordHash).IsRequired();
-            user.Property(u => u.MailAddress).IsRequired();
-            user.Property(u => u.PhoneNumber).IsRequired();
         });
 
         modelBuilder.Entity<Role>(role =>

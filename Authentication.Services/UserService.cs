@@ -52,4 +52,9 @@ public class UserService : IUserService
 
         return user;
     }
+
+    public async Task UpdateUserActivityAsync(User user)
+    {
+        await _unitOfWork.Users.UpdateActivityAsync(user);
+    }
 }

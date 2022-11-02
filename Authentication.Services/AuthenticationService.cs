@@ -16,8 +16,7 @@ public class AuthenticationService : IAuthenticationService
     public async Task<AuthenticationResult> RegisterAsync(User user, string password)
     {
         user.Roles ??= new List<Role>();
-        user.CreatedAt = DateTime.UtcNow;
-        
+
         var result = await _userManager.CreateAsync(user, password);
 
         if (!result.Succeeded)

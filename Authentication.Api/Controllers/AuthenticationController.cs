@@ -4,7 +4,9 @@ using Authentication.Common;
 using Authentication.Common.Exceptions;
 using Authentication.Services.Abstracts;
 using AutoMapper;
+using MassTransit;
 using Microsoft.AspNetCore.Mvc;
+using RentRide.AuthenticationApi.Models;
 
 namespace Authentication.Api.Controllers;
 
@@ -14,11 +16,15 @@ public class AuthenticationController : Controller
 {
     private readonly IAuthenticationService _authenticationService;
     private readonly IMapper _mapper;
+    private readonly IBus _bus;
+    private readonly ILogger _logger;
     
-    public AuthenticationController(IAuthenticationService authenticationService, IMapper mapper)
+    public AuthenticationController(IAuthenticationService authenticationService, IMapper mapper,  IBus bus, ILogger<AuthenticationController> logger)
     {
         _authenticationService = authenticationService;
         _mapper = mapper;
+        _bus = bus;
+        _logger = logger;
     }
 
     /// <summary>
@@ -55,6 +61,14 @@ public class AuthenticationController : Controller
             throw new BadRequestException("Registration error", error);
         }
 
+        var createdUser = _mapper.Map<UserRegistrationRequestModel, UserCreated>(userModel);
+        createdUser.Id = user.Id;
+        
+        _logger.LogInformation($"Created User - Login: {user.Username}, Id: {user.Id}");
+        await _bus.Publish(createdUser);
+        _logger.LogInformation($"Publish created user");
+        
+        
         return Ok();
     }
 }

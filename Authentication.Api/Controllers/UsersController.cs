@@ -15,17 +15,19 @@ namespace Authentication.Api.Controllers;
     /// </summary>
     [ApiController]
     [Route("[controller]")]
-    public class UsersController :Controller
+ public class UsersController :Controller
     {
         private readonly IUserService _userService;
         private readonly IAuthenticationService _authenticationService; 
         private readonly IMapper _mapper;
+        private readonly ILogger _logger;
 
-        public UsersController(IUserService userService, IAuthenticationService authenticationService, IMapper mapper)
+        public UsersController(IUserService userService, IAuthenticationService authenticationService, IMapper mapper, ILogger<AuthenticationController> logger)
         {
             _userService = userService;
             _authenticationService = authenticationService;
             _mapper = mapper;
+            _logger = logger;
         }
         
         /// <summary>
@@ -33,7 +35,7 @@ namespace Authentication.Api.Controllers;
         /// </summary>
         // <returns>Users collection</returns>
         [ProducesResponseType(typeof(IReadOnlyCollection<UserResponseModel>), StatusCodes.Status200OK)]
-        [Authorize(Roles = "ADMIN")]
+        //[Authorize]
         [HttpGet]
         public async Task<ActionResult> GetUsersAsync()
         {
@@ -41,6 +43,8 @@ namespace Authentication.Api.Controllers;
             
             var userResponseModels =
                 _mapper.Map<IReadOnlyCollection<User>, IReadOnlyCollection<UserResponseModel>>(users); 
+            
+            _logger.LogInformation("Returned users collection");
             
             return Ok(userResponseModels);
         }
@@ -74,7 +78,7 @@ namespace Authentication.Api.Controllers;
         [ProducesResponseType(typeof(void), StatusCodes.Status204NoContent)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         [HttpDelete("{id:guid}")]
         public async Task<ActionResult> DeleteUserAsync(Guid id)
         {
@@ -117,8 +121,6 @@ namespace Authentication.Api.Controllers;
                 throw new ForbiddenException("invalid password");
             }
             
-            user.PhoneNumber = userEditRequestModel.PhoneNumber;
-            user.MailAddress = userEditRequestModel.MailAddress;
             await _userService.UpdateAsync(user);
             return Ok();
         }  

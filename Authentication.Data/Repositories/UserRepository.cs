@@ -8,8 +8,10 @@ namespace Authentication.Data.Repositories;
 
 public class UserRepository : Repository<User>, IUserRepository
 {
+    private readonly DbContext _context;
     public UserRepository(DbContext context) : base(context)
     {
+        _context = context;
     }
 
     public ReadOnlyCollection<User> GetAllUsers()
@@ -33,6 +35,14 @@ public class UserRepository : Repository<User>, IUserRepository
             .FirstOrDefaultAsync(user => user.Username == name);
 
         return user;
+    }
+
+    public async Task UpdateActivityAsync(User user)
+    {
+        Data.Attach(user);
+        Data.Entry(user).Property("IsActive").IsModified = true;
+
+        await _context.SaveChangesAsync();
     }
 
     private IQueryable<User> GetUserQuery()

@@ -11,4 +11,6 @@ public interface IUserRepository : IRepository<User>
     Task<User> GetByIdAsync(Guid id);
 
     Task<User> GetByNameAsync(string name);
+
+    Task UpdateActivityAsync(User user);
 }

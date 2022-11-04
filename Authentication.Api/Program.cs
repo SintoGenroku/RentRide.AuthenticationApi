@@ -6,16 +6,20 @@ using Authentication.Common;
 using Authentication.Data;
 using Authentication.Data.Abstracts;
 using Authentication.Data.Stores;
+using Authentication.Refit;
 using Authentication.Services;
 using Authentication.Services.Abstracts;
 using IdentityServer4.AccessTokenValidation;
 using MassTransit;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
+using Refit;
 using RentRide.AuthenticationApi.Models;
 using Serilog;
-using Serilog.Events;
 using Serilog.Sinks.Logz.Io;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -27,6 +31,8 @@ services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 services.AddEndpointsApiExplorer();
 services.AddSwaggerGen();
+
+services.AddControllersWithViews();
 
 services.AddSwaggerGen(options =>
 {
@@ -57,6 +63,11 @@ services.AddScoped<IAuthenticationUnitOfWork, AuthenticationUnitOfWork>();
 services.AddScoped<IAuthenticationService, AuthenticationService>();
 services.AddScoped<IUserService, UserService>();
 
+/*services.AddRefitClient<IIdentityApi>()
+    .ConfigureHttpClient(configuration =>
+    {
+        configuration.BaseAddress = new Uri("http://localhost:5035");
+    });*/
 
 services.AddAutoMapper(configuration => { configuration.AddMaps(typeof(Program).Assembly); });
 
@@ -90,22 +101,34 @@ services.AddIdentityCore<User>(options =>
     .AddRoleManager<RoleManager<Role>>()
     .AddUserManager<UserManager<User>>();
 
-services.AddIdentityServer()
+services.AddIdentityServer(options =>
+    {
+        options.EmitStaticAudienceClaim = true;
+    })
+    .AddAspNetIdentity<User>()
     .AddInMemoryApiResources(Configuration.ApiResources)
     .AddInMemoryIdentityResources(Configuration.IdentityResources)
     .AddInMemoryApiScopes(Configuration.ApiScopes)
     .AddInMemoryClients(Configuration.Clients)
     .AddDeveloperSigningCredential()
-    .AddAspNetIdentity<User>()
     .AddResourceOwnerValidator<CustomResourceOwnerPasswordValidator>();
 
-services.AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
-    .AddIdentityServerAuthentication(options =>
+services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.Name = "Identity.Cookie";
+    options.LoginPath = "/Authentication/Login";
+    options.LogoutPath = "/Authentication/Logout";
+});
+services.AddAuthentication(config =>
     {
-        options.Authority = "http://localhost:5035";
-        options.RequireHttpsMetadata = false;
-        options.ApiName = "Client";
-        options.ApiSecret = "client-secret";
+        config.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        
+    })
+    .AddCookie("Identity.Application",options =>
+    {
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(20);
+        options.SlidingExpiration = true;
+        options.AccessDeniedPath = "/Forbidden/";
     });
 
 var logger = new LoggerConfiguration()
@@ -135,6 +158,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseIdentityServer();
 
 app.UseRouting();
 
@@ -146,8 +172,9 @@ app.UseCors(options => options
     .AllowAnyHeader()
     .AllowAnyMethod());
 
-app.UseIdentityServer();
 
-app.MapControllers();
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Authentication}/{action=Login}");
 
 app.Run();

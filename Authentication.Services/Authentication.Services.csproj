@@ -9,6 +9,7 @@
     <ItemGroup>
       <ProjectReference Include="..\Authentication.Common\Authentication.Common.csproj" />
       <ProjectReference Include="..\Authentication.Data\Authentication.Data.csproj" />
+      <ProjectReference Include="..\Authentication.Refit\Authentication.Refit.csproj" />
     </ItemGroup>
 
 </Project>

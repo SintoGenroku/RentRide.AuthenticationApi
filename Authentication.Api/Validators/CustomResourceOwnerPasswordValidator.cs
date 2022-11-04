@@ -1,6 +1,7 @@
 ﻿using Authentication.Services.Abstracts;
 using IdentityServer4.Models;
 using IdentityServer4.Validation;
+using RentRide.AuthenticationApi.Models.Requests;
 
 namespace Authentication.Api.Validators;
 
@@ -19,8 +20,12 @@ public class CustomResourceOwnerPasswordValidator : IResourceOwnerPasswordValida
         var user = await _userService.GetByNameAsync(context.UserName);
         if (user != null)
         {
-            
-            var result = await _authenticationService.SignInAsync(user, context.Password);
+            var loginRequest = new LoginRequestModel
+            {
+                username = context.UserName,
+                password = context.Password
+            };
+            var result = await _authenticationService.SignInAsync(loginRequest);
             // https://docs.identityserver.io/en/latest/reference/grant_validation_result.html#refgrantvalidationresult
             if (result.IsSuccessfull)
             {

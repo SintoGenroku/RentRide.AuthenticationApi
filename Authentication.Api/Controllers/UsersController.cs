@@ -95,33 +95,4 @@ namespace Authentication.Api.Controllers;
             
             return NoContent();
         }
-        
-        /// <summary>
-        ///     Allows update current user 
-        /// </summary>
-        /// <param name="userEditRequestModel">special user model with updated data</param>
-        /// <param name="id">GUID user identifier</param>
-        // <returns>Operation status code</returns>
-        [ProducesResponseType(typeof(void), StatusCodes.Status204NoContent)]
-        [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
-        [Authorize]
-        [HttpPatch("{id:guid}")]
-        public async Task<IActionResult> EditUserAsync(UserEditRequestModel userEditRequestModel, Guid id)
-        {
-            if (userEditRequestModel.Id != id)
-            {
-                throw new BadRequestException("Id do not match");
-            }
-
-            var user = await _userService.GetUserByIdAsync(userEditRequestModel.Id); 
-            
-            var result = await _authenticationService.SignInAsync(user, userEditRequestModel.Password);
-            if (!result.IsSuccessfull)
-            {
-                throw new ForbiddenException("invalid password");
-            }
-            
-            await _userService.UpdateAsync(user);
-            return Ok();
-        }  
-}
+    }

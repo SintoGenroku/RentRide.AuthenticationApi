@@ -39,4 +39,13 @@ public class AuthenticationResult
 
             return new AuthenticationResult(errorMessages, false);
         }
+        public static AuthenticationResult SignInFailed(ICollection<string> errorMessages)
+        {
+            if (errorMessages == null || !errorMessages.Any())
+            {
+                throw new ArgumentOutOfRangeException(nameof(errorMessages), "No error messages");
+            }
+
+            return new AuthenticationResult(errorMessages, false);
+        }
 }

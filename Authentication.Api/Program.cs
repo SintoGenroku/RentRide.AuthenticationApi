@@ -6,18 +6,13 @@ using Authentication.Common;
 using Authentication.Data;
 using Authentication.Data.Abstracts;
 using Authentication.Data.Stores;
-using Authentication.Refit;
 using Authentication.Services;
 using Authentication.Services.Abstracts;
-using IdentityServer4.AccessTokenValidation;
 using MassTransit;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
-using Refit;
 using RentRide.AuthenticationApi.Models;
 using Serilog;
 using Serilog.Sinks.Logz.Io;
@@ -62,12 +57,6 @@ services.AddDbContext<AuthenticationDbContext>(options =>
 services.AddScoped<IAuthenticationUnitOfWork, AuthenticationUnitOfWork>();
 services.AddScoped<IAuthenticationService, AuthenticationService>();
 services.AddScoped<IUserService, UserService>();
-
-/*services.AddRefitClient<IIdentityApi>()
-    .ConfigureHttpClient(configuration =>
-    {
-        configuration.BaseAddress = new Uri("http://localhost:5035");
-    });*/
 
 services.AddAutoMapper(configuration => { configuration.AddMaps(typeof(Program).Assembly); });
 
@@ -119,12 +108,17 @@ services.ConfigureApplicationCookie(options =>
     options.LoginPath = "/Authentication/Login";
     options.LogoutPath = "/Authentication/Logout";
 });
-services.AddAuthentication(config =>
-    {
-        config.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        
-    })
-    .AddCookie("Identity.Application",options =>
+
+services.AddAuthentication(o =>
+        {
+            o.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            o.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
+        .AddJwtBearerConfiguration(
+        builder.Configuration["Jwt:Issuer"],
+        builder.Configuration["Jwt:Audience"]
+    )
+    .AddCookie("Identity.Application", options =>
     {
         options.ExpireTimeSpan = TimeSpan.FromMinutes(20);
         options.SlidingExpiration = true;
@@ -164,8 +158,8 @@ app.UseIdentityServer();
 
 app.UseRouting();
 
-app.UseAuthorization();
 app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseCors(options => options
     .AllowAnyOrigin()

@@ -1,12 +1,10 @@
-﻿using System.Security.Claims;
-using Authentication.Api.Models.Requests.Users;
+﻿using Authentication.Api.Models.Requests.Users;
 using Authentication.Api.Models.Responses.Errors;
 using Authentication.Api.Models.ViewModels.Users;
 using Authentication.Common;
 using Authentication.Common.Exceptions;
-using Authentication.Services.Abstracts;
 using AutoMapper;
-using IdentityServer4;
+using IdentityModel.Client;
 using IdentityServer4.Extensions;
 using IdentityServer4.Services;
 using MassTransit;
@@ -89,9 +87,9 @@ public class AuthenticationController : Controller
     }
     
     /// <summary>
-    ///     Registration endpoint
+    ///     login endpoint
     /// </summary>
-    /// <param name="userModel">Create user model</param>
+    /// <param name="userModel">login user model</param>
     /// <exception cref="BadRequestException"></exception>
     [ProducesResponseType(typeof(void), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status200OK)]
@@ -114,14 +112,17 @@ public class AuthenticationController : Controller
 
         if (result.IsSuccessfull)
         {
-            return Ok($"logged in: {User.IsAuthenticated()}"); //Redirect("https://www.youtube.com");
+            var token = await HttpContext.GetTokenAsync("access_token"); //returns null
+            var client = new HttpClient();
+            client.SetBearerToken(token);
+            return Redirect(userModel.ReturnUrl);
         }
         ModelState.AddModelError(String.Empty, "Incorrect login credentials");
         return View(userModel);
     }
 
     [HttpGet("login")]
-    public IActionResult LoginAsync(string? returnUrlll = "https://www.youtube.com")
+    public IActionResult LoginAsync(string returnUrlll)
     {
         var loginViewModel = new UserLoginViewModel()
         {
@@ -137,5 +138,4 @@ public class AuthenticationController : Controller
         var logoutRequest = await _interactionService.GetLogoutContextAsync(logoutId);
         return Redirect(logoutRequest.PostLogoutRedirectUri);
     }
-        
 }

@@ -7,7 +7,7 @@ public interface IUserService
 {
     Task<ReadOnlyCollection<User>> GetUsersAsync();
 
-    Task DeleteUsersAsync(User user);
+    Task DeleteUserAsync(User user);
 
     Task<User> GetUserByIdAsync(Guid id);
 

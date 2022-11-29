@@ -9,7 +9,6 @@ using Authentication.Data.Stores;
 using Authentication.Services;
 using Authentication.Services.Abstracts;
 using MassTransit;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -66,9 +65,9 @@ services.AddMassTransit(c =>
     
     c.UsingRabbitMq((context, config) =>
     {
-        config.ReceiveEndpoint("auth-queue", e =>
+        config.ReceiveEndpoint("user-auth-queue", e =>
         {
-            e.Bind<UserCreated>();
+            e.Bind<UserQueue>();
             e.ConfigureConsumer<UserConsumer>(context);
         });
     });
@@ -104,26 +103,11 @@ services.AddIdentityServer(options =>
 
 services.ConfigureApplicationCookie(options =>
 {
-    options.Cookie.Name = "Identity.Cookie";
     options.LoginPath = "/Authentication/Login";
     options.LogoutPath = "/Authentication/Logout";
 });
 
-services.AddAuthentication(o =>
-        {
-            o.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            o.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        })
-        .AddJwtBearerConfiguration(
-        builder.Configuration["Jwt:Issuer"],
-        builder.Configuration["Jwt:Audience"]
-    )
-    .AddCookie("Identity.Application", options =>
-    {
-        options.ExpireTimeSpan = TimeSpan.FromMinutes(20);
-        options.SlidingExpiration = true;
-        options.AccessDeniedPath = "/Forbidden/";
-    });
+services.AddAuthConfiguration();
 
 var logger = new LoggerConfiguration()
     .WriteTo.LogzIoDurableHttp(

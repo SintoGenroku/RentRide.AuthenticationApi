@@ -36,7 +36,7 @@ public class UserService : IUserService
         return users;
     }
 
-    public async Task DeleteUsersAsync(User user)
+    public async Task DeleteUserAsync(User user)
     { 
         await _unitOfWork.Users.DeleteAsync(user);
     }

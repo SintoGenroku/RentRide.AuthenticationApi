@@ -6,7 +6,7 @@ using RentRide.AuthenticationApi.Models;
 
 namespace Authentication.Api.Consumers;
 
-public class UserConsumer : IConsumer<UserCreated>
+public class UserConsumer : IConsumer<UserQueue>
 {
     private readonly IUserService _userService;
     private readonly IMapper _mapper;
@@ -19,11 +19,21 @@ public class UserConsumer : IConsumer<UserCreated>
         /*_logger = logger;*/
     }
     
-    public async Task Consume(ConsumeContext<UserCreated> context)
+    public async Task Consume(ConsumeContext<UserQueue> context)
     {
         var userQueue = context.Message;
-        var user = _mapper.Map<UserCreated, User>(userQueue);
-        
+        var user = _mapper.Map<UserQueue, User>(userQueue);
+        if (user.IsDeleted)
+        {
+            user.Roles.Clear();
+            user.Username = null;
+            user.PasswordHash = null;
+            
+            await _userService.UpdateAsync(user);
+            //_logger.LogInformation($"UserApi set user status IsActive to: {user.IsActive}");
+            
+            return;
+        }
         await _userService.UpdateUserActivityAsync(user);
         //_logger.LogInformation($"UserApi set user status IsActive to: {user.IsActive}");
     }

@@ -122,7 +122,8 @@ public class Configuration
         new()
         {
             ClientId = "client",
-            AllowedGrantTypes = GrantTypes.Code,
+            AllowedGrantTypes = GrantTypes.Hybrid,
+
             ClientSecrets =
             {
                 new Secret("client-secret".Sha256()),     
@@ -133,7 +134,9 @@ public class Configuration
                 "UserInfoScope", "user-profile", "Client" 
 
             },
-            AllowOfflineAccess    = true
+            AllowOfflineAccess = true,
+            RequirePkce = true,
+            AllowAccessTokensViaBrowser = true
         },
         new ()
         {

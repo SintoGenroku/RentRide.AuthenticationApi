@@ -4,12 +4,10 @@ using Authentication.Api.Models.ViewModels.Users;
 using Authentication.Common;
 using Authentication.Common.Exceptions;
 using AutoMapper;
-using IdentityModel.Client;
-using IdentityServer4.Extensions;
 using IdentityServer4.Services;
 using MassTransit;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using RentRide.AuthenticationApi.Models;
 using RentRide.AuthenticationApi.Models.Requests;
 using IAuthenticationService = Authentication.Services.Abstracts.IAuthenticationService;
@@ -56,7 +54,8 @@ public class AuthenticationController : Controller
         }
 
         var user = _mapper.Map<User>(userModel);
-
+        user.IsActive = true;
+        
         var result = await _authenticationService.RegisterAsync(user, userModel.Password);
 
         if (!result.IsSuccessfull)
@@ -69,7 +68,7 @@ public class AuthenticationController : Controller
             throw new BadRequestException("Registration error", error);
         }
 
-        var createdUser = _mapper.Map<UserRegistrationRequestModel, UserCreated>(userModel);
+        var createdUser = _mapper.Map<UserRegistrationRequestModel, UserQueue>(userModel);
         createdUser.Id = user.Id;
         
         _logger.LogInformation($"Created User - Login: {user.Username}, Id: {user.Id}");
@@ -112,9 +111,7 @@ public class AuthenticationController : Controller
 
         if (result.IsSuccessfull)
         {
-            var token = await HttpContext.GetTokenAsync("access_token"); //returns null
-            var client = new HttpClient();
-            client.SetBearerToken(token);
+
             return Redirect(userModel.ReturnUrl);
         }
         ModelState.AddModelError(String.Empty, "Incorrect login credentials");
@@ -122,11 +119,11 @@ public class AuthenticationController : Controller
     }
 
     [HttpGet("login")]
-    public IActionResult LoginAsync(string returnUrlll)
+    public IActionResult LoginAsync(string? returnUrl)
     {
         var loginViewModel = new UserLoginViewModel()
         {
-            ReturnUrl = returnUrlll
+            ReturnUrl = returnUrl.IsNullOrEmpty()?"http://localhost:3000/home" : returnUrl
         };
         return View(loginViewModel);
     }

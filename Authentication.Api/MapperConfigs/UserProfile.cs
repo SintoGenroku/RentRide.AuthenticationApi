@@ -1,5 +1,4 @@
 ﻿using Authentication.Api.Models.Requests.Users;
-using Authentication.Api.Models.Responses.Users;
 using Authentication.Api.Models.ViewModels.Users;
 using Authentication.Common;
 using AutoMapper;
@@ -15,9 +14,8 @@ public class UserProfile : Profile
         CreateMap<UserRegistrationRequestModel, User>()
             .ForMember(request => request.Username, o => o.MapFrom(user => user.Login));
         CreateMap<UserEditRequestModel, User>();
-        CreateMap<User, UserResponseModel>();
-        CreateMap<UserRegistrationRequestModel, UserCreated>();
-        CreateMap<UserCreated, User>();
+        CreateMap<UserRegistrationRequestModel, UserQueue>();
+        CreateMap<UserQueue, User>();
         CreateMap<UserLoginViewModel, LoginRequestModel>()
             .ForMember(viewModel => viewModel.username, o => o.MapFrom(user => user.Login))
             .ForMember(viewModel => viewModel.password, o => o.MapFrom(user => user.Password));

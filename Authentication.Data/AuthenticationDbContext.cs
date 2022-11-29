@@ -23,6 +23,8 @@ public class AuthenticationDbContext : DbContext
 
             user.Property(u => u.Username).IsRequired();
             user.Property(u => u.PasswordHash).IsRequired();
+            user.Property(u => u.IsActive).HasDefaultValue(true);
+            user.Property(u => u.IsDeleted).HasDefaultValue(false);
         });
 
         modelBuilder.Entity<Role>(role =>

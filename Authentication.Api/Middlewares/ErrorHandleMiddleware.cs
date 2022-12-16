@@ -2,8 +2,8 @@
 using System.Text.Json;
 using System.Text.Unicode;
 using Authentication.Api.Models.Responses.Errors;
-using Authentication.Common.Exceptions;
 using Microsoft.AspNetCore.WebUtilities;
+using RentRide.Common.Exceptions;
 
 namespace Authentication.Api.Middlewares;
 

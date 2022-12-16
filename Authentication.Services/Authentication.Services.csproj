@@ -13,6 +13,7 @@
 
     <ItemGroup>
       <PackageReference Include="RentRide.AuthenticationApi.Models" Version="1.4.1" />
+      <PackageReference Include="RentRide.Common" Version="1.0.2" />
     </ItemGroup>
 
 </Project>

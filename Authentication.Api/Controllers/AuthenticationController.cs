@@ -2,7 +2,6 @@
 using Authentication.Api.Models.Responses.Errors;
 using Authentication.Api.Models.ViewModels.Users;
 using Authentication.Common;
-using Authentication.Common.Exceptions;
 using AutoMapper;
 using IdentityServer4.Services;
 using MassTransit;
@@ -10,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using RentRide.AuthenticationApi.Models;
 using RentRide.AuthenticationApi.Models.Requests;
+using RentRide.Common.Exceptions;
 using IAuthenticationService = Authentication.Services.Abstracts.IAuthenticationService;
 
 namespace Authentication.Api.Controllers;

@@ -150,7 +150,7 @@ app.UseCors(options => options
     .AllowAnyHeader()
     .AllowAnyMethod());
 
-
+app.UseHsts();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Authentication}/{action=Login}");

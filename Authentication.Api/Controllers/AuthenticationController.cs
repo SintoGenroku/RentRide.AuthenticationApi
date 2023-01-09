@@ -2,7 +2,6 @@
 using Authentication.Api.Models.Responses.Errors;
 using Authentication.Api.Models.ViewModels.Users;
 using Authentication.Common;
-using Authentication.Common.Exceptions;
 using AutoMapper;
 using IdentityServer4.Services;
 using MassTransit;
@@ -10,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using RentRide.AuthenticationApi.Models;
 using RentRide.AuthenticationApi.Models.Requests;
+using RentRide.Common.Exceptions;
 using IAuthenticationService = Authentication.Services.Abstracts.IAuthenticationService;
 
 namespace Authentication.Api.Controllers;
@@ -21,7 +21,7 @@ public class AuthenticationController : Controller
     private readonly IAuthenticationService _authenticationService;
     private readonly IMapper _mapper;
     private readonly IBus _bus;
-    private readonly ILogger _logger;
+    private readonly ILogger<AuthenticationController> _logger;
     private readonly IIdentityServerInteractionService _interactionService;
     
     public AuthenticationController(IAuthenticationService authenticationService, IMapper mapper,  IBus bus, ILogger<AuthenticationController> logger, IIdentityServerInteractionService interactionService)
@@ -71,9 +71,10 @@ public class AuthenticationController : Controller
         var createdUser = _mapper.Map<UserRegistrationRequestModel, UserQueue>(userModel);
         createdUser.Id = user.Id;
         
-        _logger.LogInformation($"Created User - Login: {user.Username}, Id: {user.Id}");
+        _logger.LogInformation("Created User: {@user}", user);
+        
         await _bus.Publish(createdUser);
-        _logger.LogInformation($"Publish created user");
+        _logger.LogInformation("Publish created user: {@createdUser}", createdUser);
         
         return  RedirectToAction("Login", "Authentication");;
     }
@@ -111,7 +112,7 @@ public class AuthenticationController : Controller
 
         if (result.IsSuccessfull)
         {
-
+            _logger.LogInformation("User Logs in successfully: {@user}", user);
             return Redirect(userModel.ReturnUrl);
         }
         ModelState.AddModelError(String.Empty, "Incorrect login credentials");
@@ -128,11 +129,12 @@ public class AuthenticationController : Controller
         return View(loginViewModel);
     }
 
-    [HttpGet]
+    [HttpGet("logout")]
     public async Task<IActionResult> LogoutAsync(string logoutId)
     {
         await _authenticationService.SignOutAsync();
         var logoutRequest = await _interactionService.GetLogoutContextAsync(logoutId);
+        _logger.LogInformation("User Logout successfully: {@logoutId}", logoutId);
         return Redirect(logoutRequest.PostLogoutRedirectUri);
     }
 }

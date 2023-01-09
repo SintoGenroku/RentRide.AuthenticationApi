@@ -12,7 +12,15 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="Microsoft.Extensions.Identity.Stores" Version="6.0.12" />
       <PackageReference Include="RentRide.AuthenticationApi.Models" Version="1.4.1" />
+      <PackageReference Include="RentRide.Common" Version="1.0.2" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="Microsoft.AspNetCore.Identity">
+        <HintPath>C:\Program Files\dotnet\shared\Microsoft.AspNetCore.App\6.0.10\Microsoft.AspNetCore.Identity.dll</HintPath>
+      </Reference>
     </ItemGroup>
 
 </Project>

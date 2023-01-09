@@ -1,8 +1,8 @@
 ﻿using System.Collections.ObjectModel;
 using Authentication.Common;
-using Authentication.Common.Exceptions;
 using Authentication.Data.Abstracts;
 using Authentication.Services.Abstracts;
+using RentRide.Common.Exceptions;
 
 namespace Authentication.Services;
 

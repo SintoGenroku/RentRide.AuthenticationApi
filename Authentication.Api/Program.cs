@@ -13,11 +13,13 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using RentRide.AuthenticationApi.Models;
+using LoggerExtensions = Authentication.Api.Extensions.LoggerExtensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var services = builder.Services;
 
+LoggerExtensions.AddElkLogger();
 
 services.AddControllers();
 services.AddEndpointsApiExplorer();

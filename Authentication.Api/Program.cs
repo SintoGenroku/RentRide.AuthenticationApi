@@ -13,8 +13,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using RentRide.AuthenticationApi.Models;
-using Serilog;
-using Serilog.Sinks.Logz.Io;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,9 +20,7 @@ var services = builder.Services;
 
 
 services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 services.AddEndpointsApiExplorer();
-services.AddSwaggerGen();
 
 services.AddControllersWithViews();
 
@@ -73,7 +69,7 @@ services.AddMassTransit(c =>
     });
 });
 
-services.AddIdentityCore<User>(options =>
+services.AddIdentity<User, Role>(options =>
     {
         options.Password.RequireDigit = true;
         options.Password.RequiredLength = 6;
@@ -81,7 +77,7 @@ services.AddIdentityCore<User>(options =>
         options.Password.RequireUppercase = false;
         options.Password.RequireNonAlphanumeric = false;
     })
-    .AddPasswordValidator<PasswordValidator<User>>()
+    .AddPasswordValidator<PasswordValidator>()
     .AddSignInManager()
     .AddUserStore<UserStore>()
     .AddRoles<Role>()
@@ -92,14 +88,14 @@ services.AddIdentityCore<User>(options =>
 services.AddIdentityServer(options =>
     {
         options.EmitStaticAudienceClaim = true;
+        options.Authentication.CookieLifetime = TimeSpan.FromMinutes(20);
     })
-    .AddAspNetIdentity<User>()
     .AddInMemoryApiResources(Configuration.ApiResources)
     .AddInMemoryIdentityResources(Configuration.IdentityResources)
     .AddInMemoryApiScopes(Configuration.ApiScopes)
     .AddInMemoryClients(Configuration.Clients)
     .AddDeveloperSigningCredential()
-    .AddResourceOwnerValidator<CustomResourceOwnerPasswordValidator>();
+    .AddAspNetIdentity<User>();
 
 services.ConfigureApplicationCookie(options =>
 {
@@ -109,25 +105,11 @@ services.ConfigureApplicationCookie(options =>
 
 services.AddAuthConfiguration();
 
-var logger = new LoggerConfiguration()
-    .WriteTo.LogzIoDurableHttp(
-        "https://listener.logz.io:8071/?type=<string>&token=NLKhSzkrJgYczQDwPtnEFSOrpfFVKRRn",
-        logzioTextFormatterOptions: new LogzioTextFormatterOptions
-        {
-            BoostProperties = true,
-            LowercaseLevel = true,
-            IncludeMessageTemplate = true,
-            FieldNaming = LogzIoTextFormatterFieldNaming.CamelCase,
-            EventSizeLimitBytes = 261120,
-        })
-    .MinimumLevel.Verbose()
-    .CreateLogger();
 
 var app = builder.Build();
 
 app.UseCustomExceptionHandler();
 await app.Services.CreateDatabaseIfNotExists();
-
 
 if (app.Environment.IsDevelopment())
 {
@@ -138,11 +120,10 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
-app.UseIdentityServer();
 
 app.UseRouting();
 
-app.UseAuthentication();
+app.UseIdentityServer();
 app.UseAuthorization();
 
 app.UseCors(options => options

@@ -54,11 +54,11 @@ public class Configuration
                     "ApiScope"
                 } 
             },
-            new("CarMaintenance.Api")
+            new("Cars.Api")
             {
                 ApiSecrets =
                 {
-                    new Secret("maintenance-secret".Sha256())
+                    new Secret("cars-secret".Sha256())
                 },
                 Scopes =
                 {
@@ -90,18 +90,6 @@ public class Configuration
                     "ApiScope"
                 } 
             },
-            new("Rating.Api")
-            {
-                ApiSecrets =
-                {
-                    new Secret("rating-secret".Sha256())
-                },
-                Scopes =
-                {
-                    "UserInfoScope",
-                    "ApiScope"
-                } 
-            },
             new("Users.Api")
             {
                 ApiSecrets =
@@ -122,7 +110,7 @@ public class Configuration
         new()
         {
             ClientId = "client",
-            AllowedGrantTypes = GrantTypes.Hybrid,
+            AllowedGrantTypes = GrantTypes.Code,
 
             ClientSecrets =
             {
@@ -131,12 +119,18 @@ public class Configuration
             AllowedScopes =
             {
                 IdentityServerConstants.StandardScopes.OpenId,
+                IdentityServerConstants.StandardScopes.OfflineAccess,
                 "UserInfoScope", "user-profile", "Client" 
 
             },
             AllowOfflineAccess = true,
             RequirePkce = true,
-            AllowAccessTokensViaBrowser = true
+            AllowAccessTokensViaBrowser = true,
+            RedirectUris = new List<string>{ "https://localhost:7035/signin-oidc" },
+            PostLogoutRedirectUris = {"https://localhost:7035/signout-callback-oidc"},
+            RequireConsent = false,
+            AccessTokenLifetime = 180,
+            UpdateAccessTokenClaimsOnRefresh = true,
         },
         new ()
         {
@@ -150,7 +144,7 @@ public class Configuration
             {
                 "ApiScope"
             },
-            AllowOfflineAccess    = true
+            AllowOfflineAccess = true
         }
     };
 }
